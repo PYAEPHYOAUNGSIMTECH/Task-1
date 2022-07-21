@@ -31,55 +31,7 @@ namespace taskAPI.Controllers
           {
               return NotFound();
           }
-            System.Diagnostics.Debug.WriteLine("Startiing consumer");
-            var factory = new ConnectionFactory()
-            {
-                HostName = Environment.GetEnvironmentVariable("RABBITMQ_HOST"),
-                Port = Convert.ToInt32(Environment.GetEnvironmentVariable("RABBITMQ_PORT"))
-            };
-            using (var connection = factory.CreateConnection())
-            using (var channel = connection.CreateModel())
-            {
-                channel.QueueDeclare(queue: "tasks",
-                                     durable: true,
-                                     exclusive: false,
-                                     autoDelete: false,
-                                     arguments: null);
-
-                var consumer = new AsyncEventingBasicConsumer(channel);
-                consumer.Received += async (model, ea) =>
-                {
-                    System.Diagnostics.Debug.WriteLine("Entering", ea.Body);
-                    var body = ea.Body.ToArray();
-                    System.Diagnostics.Debug.WriteLine(body);
-                    var message = Encoding.UTF8.GetString(body);
-                    System.Diagnostics.Debug.WriteLine(" [x] Received {0}", message);
-                    await Task.Yield();
-                    var taskItem = new TaskItem()
-                    {
-                        
-                        description = message,
-                        priority = "Urgent",
-                        status = "Started",
-                        customerID = 10
-
-                    };
-
-                    _context.TaskItems.Add(taskItem);
-                    await _context.SaveChangesAsync();
-                    CreatedAtAction("GetTaskItem", new { id = taskItem.taskItemID }, taskItem);
-
-
-                };
-                
-            System.Diagnostics.Debug.WriteLine("Starting consumer");
-                channel.BasicConsume(queue: "tasks",
-                                     autoAck: true,
-                                     consumer: consumer);
-
-            }
-           
-            return await _context.TaskItems.ToListAsync();
+           return await _context.TaskItems.ToListAsync();
         }
 
         // GET: api/TaskItems/5
